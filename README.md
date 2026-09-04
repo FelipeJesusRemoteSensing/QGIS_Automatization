@@ -26,20 +26,6 @@ Através de um painel acoplável (*DockWidget*) integrado diretamente à interfa
 - ⚡ **Zero dependências externas:** Usa apenas as bibliotecas padrão do Python (`urllib.request`, `json`, `re`) e o ecossistema nativo do QGIS (`qgis.core`, `qgis.PyQt`). Não é necessário instalar `pip install` nem gerenciar ambientes virtuais no Python do QGIS.
 - 🗺️ **Consciência de Contexto Espacial:** Antes de consultar a IA, o script mapeia automaticamente o nome, tipo geométrico (pontos, linhas, polígonos, rasters) e SRC (Sistema de Referência de Coordenadas) das camadas carregadas no projeto.
 - 🛡️ **Engenharia de Prompt Especializada:** Instruções de sistema blindadas orientam o modelo a usar APIs corretas do PyQGIS 3, evitando funções depreciadas e garantindo o encadeamento adequado do módulo `processing`.
-
----
-
-## 🏗️ Arquitetura e Fluxo de Execução
-
-```mermaid
-flowchart LR
-    A[Usuário digita comando em linguagem natural] --> B[get_project_context\nMapeia camadas, tipos e CRS]
-    B --> C[call_gemini_api\nEnvia Prompt + Contexto + System Instruction]
-    C --> D[Google Gemini API\nRetorna bloco de código Python]
-    D --> E[Regex Parser\nExtrai código limpo e exibe no Log]
-    E --> F[exec() no escopo QGIS\nAtualiza o Canvas com iface.refresh]
-```
-
 ---
 
 ## 📋 Pré-requisitos
