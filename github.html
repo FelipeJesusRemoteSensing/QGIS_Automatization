@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QGIS Copilot Docs - Automação Nativa com Gemini LLM</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Prism.js para Syntax Highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    pre[class*="language-"] { border-radius: 0.75rem; margin: 1rem 0; font-size: 0.875rem; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-200 antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- Top Navigation -->
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-900/80 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-emerald-500/20">
+          Q
+        </div>
+        <div>
+          <span class="font-bold text-white tracking-tight text-lg">QGIS<span class="text-emerald-400">AI</span></span>
+          <span class="text-xs text-slate-400 ml-2 px-2 py-0.5 border border-slate-700 rounded-full">v3.x Native</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="#codigo-completo" class="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+          <i data-lucide="code" class="w-4 h-4"></i> Código Fonte
+        </a>
+        <a href="https://github.com" target="_blank" class="text-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3.5 py-1.5 rounded-lg hover:bg-emerald-500 hover:text-slate-950 font-medium transition-all">
+          GitHub Repo
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+    <!-- Sidebar Menu (Sticky) -->
+    <aside class="hidden lg:block lg:col-span-3">
+      <div class="sticky top-24 space-y-6">
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Roteiro do Tutorial</h4>
+          <nav class="space-y-1 text-sm">
+            <a href="#arquitetura" class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">1. Arquitetura Geral</a>
+            <a href="#anatomia" class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">2. Anatomia do Script</a>
+            <a href="#instalacao" class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">3. Passo a Passo</a>
+            <a href="#prompts" class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">4. Prompts Prontos</a>
+            <a href="#erros" class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">5. Resolução de Erros</a>
+            <a href="#codigo-completo" class="block px-3 py-2 rounded-lg font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors">6. Baixar / Copiar Script</a>
+          </nav>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2">
+          <div class="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase">
+            <i data-lucide="zap" class="w-4 h-4"></i> Sem Dependências
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Este copiloto roda nativamente via <code class="text-slate-300">urllib</code>. Não requer instalação de pacotes externos via <code class="text-slate-300">pip</code>.
+          </p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="lg:col-span-9 space-y-14">
+
+      <!-- Hero Section -->
+      <section class="border-b border-slate-800 pb-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-4">
+          <i data-lucide="terminal" class="w-3.5 h-3.5"></i> Automação PyQGIS + Gemini API
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+          Criando seu Próprio Copiloto de IA no QGIS
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-slate-400 max-w-3xl leading-relaxed">
+          Aprenda a construir um painel acoplável (<code class="text-slate-200">QDockWidget</code>) integrado ao QGIS, capaz de inspecionar as camadas abertas, enviar o contexto à API REST do Gemini e executar rotinas de geoprocessamento em tempo real.
+        </p>
+      </section>
+
+      <!-- 1. Arquitetura Geral -->
+      <section id="arquitetura" class="scroll-mt-24 space-y-4">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-md bg-slate-800 border border-slate-700 text-emerald-400 text-sm flex items-center justify-center font-bold">1</span>
+          Visão Geral da Arquitetura
+        </h2>
+        <p class="text-slate-400 leading-relaxed">
+          Diferente de plugins pesados, esta solução opera como um script único executado diretamente no <b>Console Python</b> do QGIS. A comunicação ocorre em um pipeline contínuo de 5 etapas:
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl text-center">
+            <i data-lucide="message-square" class="w-5 h-5 text-emerald-400 mx-auto mb-1.5"></i>
+            <span class="text-xs font-semibold text-white block">Prompt</span>
+            <span class="text-[11px] text-slate-400">Texto do usuário</span>
+          </div>
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl text-center">
+            <i data-lucide="layers" class="w-5 h-5 text-sky-400 mx-auto mb-1.5"></i>
+            <span class="text-xs font-semibold text-white block">Contexto</span>
+            <span class="text-[11px] text-slate-400">Varredura de camadas</span>
+          </div>
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl text-center">
+            <i data-lucide="cloud" class="w-5 h-5 text-indigo-400 mx-auto mb-1.5"></i>
+            <span class="text-xs font-semibold text-white block">API REST</span>
+            <span class="text-[11px] text-slate-400">Chamada Gemini</span>
+          </div>
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl text-center">
+            <i data-lucide="code-xml" class="w-5 h-5 text-amber-400 mx-auto mb-1.5"></i>
+            <span class="text-xs font-semibold text-white block">Regex</span>
+            <span class="text-[11px] text-slate-400">Extração do código</span>
+          </div>
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl text-center">
+            <i data-lucide="play" class="w-5 h-5 text-emerald-400 mx-auto mb-1.5"></i>
+            <span class="text-xs font-semibold text-white block">Execução</span>
+            <span class="text-[11px] text-slate-400">Disparo via exec()</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Anatomia do Script -->
+      <section id="anatomia" class="scroll-mt-24 space-y-6">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-md bg-slate-800 border border-slate-700 text-emerald-400 text-sm flex items-center justify-center font-bold">2</span>
+          Anatomia do Script: Blocos Chave
+        </h2>
+
+        <div class="space-y-4">
+          <!-- Bloco A -->
+          <div class="bg-slate-800/30 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors">
+            <h3 class="font-semibold text-emerald-400 text-base mb-1.5 flex items-center gap-2">
+              <i data-lucide="layout" class="w-4 h-4"></i> Bloco A: Interface Gráfica com QDockWidget
+            </h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              O script herda de <code class="text-slate-200">QDockWidget</code> para criar um painel nativo que pode ser acoplado à direita ou esquerda do canvas do QGIS. Ele conta com um campo <code class="text-slate-200">QPlainTextEdit</code> para receber o comando do usuário e um <code class="text-slate-200">QTextEdit</code> de log formatado com HTML para inspecionar o código antes e depois da execução.
+            </p>
+          </div>
+
+          <!-- Bloco B -->
+          <div class="bg-slate-800/30 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors">
+            <h3 class="font-semibold text-emerald-400 text-base mb-1.5 flex items-center gap-2">
+              <i data-lucide="database" class="w-4 h-4"></i> Bloco B: Injeção de Contexto Espacial (get_project_context)
+            </h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Antes de enviar o prompt à LLM, o método itera por <code class="text-slate-200">QgsProject.instance().mapLayers()</code>. Ele lista o nome exato de cada camada carregada, sua geometria (Pontos, Linhas, Polígonos ou Raster) e seu SRC/CRS (ex.: <code class="text-slate-200">EPSG:4674</code>). Isso impede que a IA alucine nomes de camadas inexistentes.
+            </p>
+          </div>
+
+          <!-- Bloco C -->
+          <div class="bg-slate-800/30 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors">
+            <h3 class="font-semibold text-emerald-400 text-base mb-1.5 flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4"></i> Bloco C: System Instruction e Regras Críticas de PyQGIS
+            </h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              O prompt de sistema injeta regras que blindam a execução: instrui a LLM a diferenciar comandos diretos de processamento (<code class="text-slate-200">processing.run</code>) de pedidos de geração de modelos (<code class="text-slate-200">QgsProcessingModelAlgorithm</code>), além de proibir o uso de métodos obsoletos ou inexistentes como <code class="text-rose-400">processingRegistry().addAlgorithm()</code>.
+            </p>
+          </div>
+
+          <!-- Bloco D -->
+          <div class="bg-slate-800/30 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors">
+            <h3 class="font-semibold text-emerald-400 text-base mb-1.5 flex items-center gap-2">
+              <i data-lucide="cpu" class="w-4 h-4"></i> Bloco D: Regex e Execução Dinâmica (process_command)
+            </h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              A resposta da API é filtrada por uma expressão regular que isola blocos <code class="text-slate-200">```python ... ```</code>. O código limpo é então injetado na função nativa <code class="text-slate-200">exec()</code> com acesso ao escopo de variáveis ativas (<code class="text-slate-200">iface</code> e <code class="text-slate-200">QgsProject</code>).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Passo a Passo -->
+      <section id="instalacao" class="scroll-mt-24 space-y-4">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-md bg-slate-800 border border-slate-700 text-emerald-400 text-sm flex items-center justify-center font-bold">3</span>
+          Como Instalar e Rodar no QGIS
+        </h2>
+
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-xs font-bold text-white flex items-center justify-center shrink-0 mt-0.5">1</div>
+            <div>
+              <h4 class="text-sm font-semibold text-white">Obtenha sua Chave da API Gemini</h4>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Acesse o Google AI Studio, gere uma chave de API gratuita e substitua na variável <code class="text-slate-300">GEMINI_API_KEY</code> do script (ou use variável de ambiente para produção).
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-xs font-bold text-white flex items-center justify-center shrink-0 mt-0.5">2</div>
+            <div>
+              <h4 class="text-sm font-semibold text-white">Abra o Console Python do QGIS</h4>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                No QGIS, pressione <kbd class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[11px]">Ctrl + Alt + P</kbd> ou navegue em <b>Complementos &gt; Console Python</b>.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-xs font-bold text-white flex items-center justify-center shrink-0 mt-0.5">3</div>
+            <div>
+              <h4 class="text-sm font-semibold text-white">Cole e Execute o Script</h4>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Clique no ícone de bloco de notas para abrir o editor interno, cole o script Python completo e aperte no botão verde de <b>Play</b>. O dock aparecerá instantaneamente acoplado à sua barra lateral direita.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Prompts Prontos -->
+      <section id="prompts" class="scroll-mt-24 space-y-4">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-md bg-slate-800 border border-slate-700 text-emerald-400 text-sm flex items-center justify-center font-bold">4</span>
+          Prompts Prontos para Testar
+        </h2>
+        <p class="text-slate-400 text-sm">Experimente enviar estes comandos no painel recém-criado:</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+          <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+            <span class="text-xs font-bold text-sky-400 uppercase tracking-wide">Estilização</span>
+            <p class="text-xs text-slate-300 mt-2 italic">
+              "Mude a cor de preenchimento da camada ativa para verde translúcido e configure a borda para preto com 0.4mm."
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+            <span class="text-xs font-bold text-emerald-400 uppercase tracking-wide">Geoprocessamento</span>
+            <p class="text-xs text-slate-300 mt-2 italic">
+              "Gere um buffer de 250 metros na camada de pontos selecionada e adicione o resultado em uma camada temporária na memória."
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+            <span class="text-xs font-bold text-amber-400 uppercase tracking-wide">Tabela de Atributos</span>
+            <p class="text-xs text-slate-300 mt-2 italic">
+              "Crie uma nova coluna chamada 'Area_ha' na camada de polígonos ativa e preencha automaticamente calculando a área em hectares."
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Resolução de Erros -->
+      <section id="erros" class="scroll-mt-24 space-y-4">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-md bg-slate-800 border border-slate-700 text-emerald-400 text-sm flex items-center justify-center font-bold">5</span>
+          Resolução de Erros e Boas Práticas
+        </h2>
+
+        <div class="divide-y divide-slate-800 border-y border-slate-800 text-sm">
+          <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span class="font-medium text-slate-200">HTTP Error 404: Not Found</span>
+            <span class="text-xs text-slate-400">Verifique se o nome do modelo no endpoint da API está correto (ex.: <code class="text-slate-300">gemini-2.5-flash</code>).</span>
+          </div>
+          <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span class="font-medium text-slate-200">Erro de Projeção / CRS em Graus</span>
+            <span class="text-xs text-slate-400">Ao pedir buffers métricos, garanta que a camada esteja em CRS projetado (UTM/SIRGAS2000).</span>
+          </div>
+          <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span class="font-medium text-slate-200">Cuidado com a Segurança do exec()</span>
+            <span class="text-xs text-slate-400">Sempre revise o código impresso na caixa de log antes de executá-lo em dados de produção.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Código Completo -->
+      <section id="codigo-completo" class="scroll-mt-24 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-md bg-slate-800 border border-slate-700 text-emerald-400 text-sm flex items-center justify-center font-bold">6</span>
+            Código Python Completo
+          </h2>
+          <button id="copyBtn" onclick="copyScript()" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Código
+          </button>
+        </div>
+
+        <div class="relative">
+          <pre class="language-python"><code id="pythonCode">import json
+import os
+import re
+import urllib.request
+from qgis.core import QgsProject
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import (
+    QDockWidget,
+    QHBoxLayout,
+    QLabel,
+    QPlainTextEdit,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+from qgis.utils import iface
+
+# Configure sua chave de API do Google AI Studio
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "SUA_CHAVE_AQUI")
+MODEL_NAME = "gemini-2.5-flash"
+
+class GeminiQGISDock(QDockWidget):
+
+    def __init__(self, parent=None):
+        super().__init__("Gemini QGIS Copilot", parent)
+        self.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea
+        )
+
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        layout.addWidget(QLabel("<b>Comando em Linguagem Natural:</b>"))
+        self.input_prompt = QPlainTextEdit()
+        self.input_prompt.setPlaceholderText(
+            "Ex: Mude a cor da camada ativa para verde claro e aplique transparência de 50%"
+        )
+        self.input_prompt.setFixedHeight(80)
+        layout.addWidget(self.input_prompt)
+
+        btn_layout = QHBoxLayout()
+        self.btn_run = QPushButton("⚡ Executar Ação")
+        self.btn_run.clicked.connect(self.process_command)
+        btn_layout.addWidget(self.btn_run)
+        layout.addLayout(btn_layout)
+
+        layout.addWidget(QLabel("<b>Log / Código Executado:</b>"))
+        self.log_area = QTextEdit()
+        self.log_area.setReadOnly(True)
+        layout.addWidget(self.log_area)
+
+        self.setWidget(widget)
+
+    def get_project_context(self):
+        """Extrai informações detalhadas das camadas abertas no projeto."""
+        layers = QgsProject.instance().mapLayers().values()
+        info = []
+        for l in layers:
+            tipo = "Raster"
+            if hasattr(l, "geometryType"):
+                geom_names = {0: "Pontos", 1: "Linhas", 2: "Polígonos", 3: "Desconhecido/Nulo"}
+                tipo = f"Vetor ({geom_names.get(l.geometryType(), 'Outro')})"
+            info.append(f"- Camada: '{l.name()}', Tipo: {tipo}, CRS: {l.crs().authid()}")
+        return "\n".join(info) if info else "Nenhuma camada carregada no projeto."
+
+    def call_gemini_api(self, prompt, context):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent?key={GEMINI_API_KEY}"
+
+        system_instruction = f"""Você é um especialista em automação e desenvolvimento no QGIS (PyQGIS 3).
+
+Contexto atual das camadas no projeto:
+{context}
+
+DIRETRIZES DE EXECUÇÃO:
+1. SE O USUÁRIO PEDIR UM "MODELO" (.model3 / Designer de Modelos):
+   - Crie uma subclasse de `QgsProcessingModelAlgorithm` salvando o arquivo na pasta oficial de modelos do QGIS (`QgsApplication.qgisSettingsDirPath() + 'processing/models/'`).
+2. SE O USUÁRIO PEDIR UMA "AUTOMAÇÃO / EXECUÇÃO DIRETA":
+   - Use `processing.run()` ou `processing.runAndLoadResults()`.
+   - Encadeie as saídas usando `output['OUTPUT']` como entrada do próximo passo.
+
+REGRAS CRÍTICAS:
+- Retorne APENAS código Python puro executável, dentro de blocos ```python ... ```.
+- Atualize sempre o canvas após modificações visuais usando `iface.mapCanvas().refresh()`.
+- NUNCA use `QgsApplication.processingRegistry().addAlgorithm()`, pois o método NÃO existe.
+"""
+
+        payload = {
+            "systemInstruction": {"parts": [{"text": system_instruction}]},
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.1},
+        }
+
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as response:
+            res_json = json.loads(response.read().decode("utf-8"))
+            return res_json["candidates"][0]["content"]["parts"][0]["text"]
+
+    def process_command(self):
+        prompt_text = self.input_prompt.toPlainText().strip()
+        if not prompt_text:
+            return
+
+        self.btn_run.setEnabled(False)
+        self.log_area.append(f"\n<b>Prompt:</b> {prompt_text}")
+
+        try:
+            context = self.get_project_context()
+            raw_response = self.call_gemini_api(prompt_text, context)
+
+            # Extrai o código Python da resposta via Regex
+            code_match = re.search(r"```(?:python)?\s*(.*?)\s*```", raw_response, re.DOTALL)
+            code = code_match.group(1) if code_match else raw_response.strip()
+
+            self.log_area.append(
+                f"<pre style='color: #2b5c8f; background: #f0f0f0; padding: 6px;'>{code}</pre>"
+            )
+
+            # Executa com acesso às instâncias ativas do QGIS
+            local_scope = {"iface": iface, "QgsProject": QgsProject}
+            exec(code, globals(), local_scope)
+
+            self.log_area.append("<b style='color: green;'>✓ Executado com sucesso!</b>")
+            self.input_prompt.clear()
+
+        except Exception as e:
+            self.log_area.append(f"<b style='color: red;'>Erro:</b> {str(e)}")
+
+        finally:
+            self.btn_run.setEnabled(True)
+
+# Limpeza para evitar janelas duplicadas ao reexecutar
+try:
+    gemini_dock.close()
+    iface.removeDockWidget(gemini_dock)
+except:
+    pass
+
+gemini_dock = GeminiQGISDock(iface.mainWindow())
+iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, gemini_dock)
+</code></pre>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 mt-20 py-8 bg-slate-950/60">
+    <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+      <p>Desenvolvido para automatização ágil com QGIS 3 e PyQGIS.</p>
+      <p>Compatível com modelos Gemini via Google AI Studio API.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script>
+    lucide.createIcons();
+
+    function copyScript() {
+      const code = document.getElementById('pythonCode').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Copiado!';
+        lucide.createIcons();
+        setTimeout(() => {
+          btn.innerHTML = '<i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Código';
+          lucide.createIcons();
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
